@@ -1,0 +1,41 @@
+#include "Model.h"
+#include <iostream>
+
+Model::Model(const std::vector<float>& vertexs, const std::vector<float>& uvs, const std::vector<float>& normals) {
+    
+    //Almaceno la cantidad de vertices que habra
+    this->numVertexs = vertexs.size() / 3;
+
+    //Generamos VAO/VBO
+    glGenVertexArrays(1, &this->VAO);
+    glGenBuffers(1, &this->VBO);
+
+    //Defino el VAO creado como activo
+    glBindVertexArray(this->VAO);
+
+    //Defino el VBO de las posiciones como activo, le paso los datos y lo configuro
+    glBindBuffer(GL_ARRAY_BUFFER, this->VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertexs.size() * sizeof(float), vertexs.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+    //Activamos el atributo 0 (posiciones por defecto)
+    glEnableVertexAttribArray(0);
+
+    //Desvinculamos VAO y VBO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);  
+
+}
+
+void Model::Render() const {
+
+    //Vinculo su VAO para ser usado
+    glBindVertexArray(this->VAO);
+
+    // Dibujamos
+    glDrawArrays(GL_TRIANGLES, 0, this->numVertexs);
+
+    //Desvinculamos VAO
+    glBindVertexArray(0);
+
+}
