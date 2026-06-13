@@ -14,6 +14,16 @@
 #define WINDOW_WIDTH 640
 #define WINDOW_HEIGHT 480
 
+const float CAMERA_ORBIT_RADIUS = 5.0f;
+const float CAMERA_ORBIT_HEIGHT = 2.5f;
+const float CAMERA_ORBIT_SPEED = 0.5f;
+const float CAMERA_FOV = 45.0f;
+const float CAMERA_NEAR = 0.1f;
+const float CAMERA_FAR = 100.0f;
+
+const glm::vec3 CAMERA_TARGET = glm::vec3(0.0f, 0.0f, 0.0f);
+const glm::vec3 CAMERA_UP = glm::vec3(0.0f, 1.0f, 0.0f);
+
 std::vector<GLuint> compiledPrograms;
 std::vector<Model> models;
 
@@ -391,8 +401,9 @@ void main() {
 	//Indicamos lado del culling
 	glCullFace(GL_BACK);
 
-	//Indicamos lado del culling
+	//Activamos depth test
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	//Leer textura
 	int width, height, nrChannels;
@@ -464,11 +475,8 @@ void main() {
 		//Indicar a la tarjeta GPU que programa debe usar
 		glUseProgram(compiledPrograms[0]);
 
-		//Definir la matriz de vista
-		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-
 		//Definir la matriz proyeccion
-		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(CAMERA_FOV), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, CAMERA_NEAR, CAMERA_FAR);
 
 		//Asignar valores iniciales al programa
 		glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), WINDOW_WIDTH, WINDOW_HEIGHT);
@@ -477,7 +485,6 @@ void main() {
 		glUniform1i(glGetUniformLocation(compiledPrograms[0], "textureSampler"), 0);
 
 		//Pasar matrices de camara
-		glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "view"), 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 		//Generamos el game loop
@@ -488,6 +495,18 @@ void main() {
 			
 			//Limpiamos los buffers
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+
+			//Calculamos el angulo de orbita segun el tiempo de ejecucion
+			float cameraAngle = -static_cast<float>(glfwGetTime()) * CAMERA_ORBIT_SPEED;
+
+			//Calculamos la posicion de la camara orbitando alrededor de la escena
+			glm::vec3 cameraPosition = glm::vec3(cos(cameraAngle) * CAMERA_ORBIT_RADIUS, CAMERA_ORBIT_HEIGHT, sin(cameraAngle) * CAMERA_ORBIT_RADIUS);
+
+			//Generamos la matriz de vista de la camara
+			glm::mat4 view = glm::lookAt(cameraPosition, CAMERA_TARGET, CAMERA_UP);
+
+			//Pasamos la matriz de vista actualizada al shader
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "view"),1,GL_FALSE,glm::value_ptr(view));
 
 			//Activamos la textura de roca
 			glActiveTexture(GL_TEXTURE0);
