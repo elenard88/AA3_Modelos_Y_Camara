@@ -21,8 +21,27 @@ const float CAMERA_FOV = 45.0f;
 const float CAMERA_NEAR = 0.1f;
 const float CAMERA_FAR = 100.0f;
 
-const glm::vec3 CAMERA_TARGET = glm::vec3(0.0f, 0.0f, 0.0f);
+const glm::vec3 ORBIT_TARGET = glm::vec3(0.0f, 0.0f, 0.0f);
+const glm::vec3 GENERAL_TARGET = glm::vec3(-2.0f, 0.0f, -2.0f);   // Troll 1
+const glm::vec3 DETAIL_TARGET = glm::vec3(2.0f, 0.0f, -2.0f);     // Troll 3
+const glm::vec3 DOLLY_ZOOM_TARGET = glm::vec3(0.0f, 0.0f, -3.0f); // Troll 2
 const glm::vec3 CAMERA_UP = glm::vec3(0.0f, 1.0f, 0.0f);
+
+enum CameraState {
+	ORBIT,
+	GENERAL,
+	DETAIL,
+	DOLLY_ZOOM
+};
+
+CameraState currentCameraState = ORBIT;
+glm::vec3 cameraPosition = glm::vec3(0.f);
+glm::vec3 cameraStartPosition = glm::vec3(0.0f);
+glm::vec3 cameraStartTarget = glm::vec3(0.0f);
+glm::vec3 currentTarget = glm::vec3(0.0f);
+float lastUpdateTime = 0.0f;
+float cameraAnimationTime = 0.0f;
+const float ANIMATION_DURATION = 10.0f;
 
 std::vector<GLuint> compiledPrograms;
 std::vector<Model> models;
@@ -369,6 +388,46 @@ void SendTintColor(GLuint program, const glm::vec4& tintColor) {
 	glUniform4f(glGetUniformLocation(program, "tintColor"), tintColor.r, tintColor.g, tintColor.b, tintColor.a);
 }
 
+glm::vec3 GetOrbitCamera(float time) {
+	float cameraAngle = -time * CAMERA_ORBIT_SPEED;
+	return glm::vec3(
+		cos(cameraAngle) * CAMERA_ORBIT_RADIUS,
+		CAMERA_ORBIT_HEIGHT,
+		sin(cameraAngle) * CAMERA_ORBIT_RADIUS
+	);
+}
+
+glm::vec3 GetGeneralPlaneCamera(float progress, glm::vec3 startPos, glm::vec3 startTarget, glm::vec3& outTarget) {
+	float t = glm::clamp(progress / ANIMATION_DURATION, 0.0f, 1.0f);
+	glm::vec3 endPos = glm::vec3(-2.f, 0.f, 2.f);
+
+	outTarget = glm::mix(startTarget, GENERAL_TARGET, t);
+
+	return glm::mix(startPos, endPos, t);
+}
+
+glm::vec3 GetDetailPlaneCamera(float progress, glm::vec3 startPos, glm::vec3 startTarget, glm::vec3& outTarget) {
+	float t = glm::clamp(progress / ANIMATION_DURATION, 0.0f, 1.0f);
+	glm::vec3 endPos = glm::vec3(2.f, 0.0f, 0.0f);
+
+	outTarget = glm::mix(startTarget, DETAIL_TARGET, t);
+
+	return glm::mix(startPos, endPos, t);
+}
+
+glm::vec3 GetDollyZoomCamera(float progress, glm::vec3 startPos, glm::vec3 startTarget, float& outFOV, glm::vec3& outTarget) {
+	float t = glm::clamp(progress / ANIMATION_DURATION, 0.0f, 1.0f);
+	glm::vec3 endPos = glm::vec3(0.0f, 0.0f, 0.0f);
+
+	float startFOV = CAMERA_FOV;
+	float endFOV = 90.0f;
+	outFOV = glm::mix(startFOV, endFOV, t);
+
+	outTarget = glm::mix(startTarget, DOLLY_ZOOM_TARGET, t);
+
+	return glm::mix(startPos, endPos, t);
+}
+
 void main() {
 
 	//Definir semillas del rand según el tiempo
@@ -532,14 +591,69 @@ void main() {
 			//Limpiamos los buffers
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-			//Calculamos el angulo de orbita segun el tiempo de ejecucion
-			float cameraAngle = -static_cast<float>(glfwGetTime()) * CAMERA_ORBIT_SPEED;
+			//Calcular la posicion de la camara segun el estado
+			float currentTime = static_cast<float>(glfwGetTime());
+			float currentFOV = CAMERA_FOV;
 
-			//Calculamos la posicion de la camara orbitando alrededor de la escena
-			glm::vec3 cameraPosition = glm::vec3(cos(cameraAngle) * CAMERA_ORBIT_RADIUS, CAMERA_ORBIT_HEIGHT, sin(cameraAngle) * CAMERA_ORBIT_RADIUS);
+			//Detectamos inputs
+			if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
+				if (currentCameraState != GENERAL) {
+					currentCameraState = GENERAL;
+					cameraAnimationTime = 0.0f;
+					cameraStartPosition = cameraPosition;
+					cameraStartTarget = currentTarget;
+				}
+			}
+			else if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
+				if (currentCameraState != DETAIL) {
+					currentCameraState = DETAIL;
+					cameraAnimationTime = 0.0f;
+					cameraStartPosition = cameraPosition;
+					cameraStartTarget = currentTarget;
+				}
+			}
+			else if (glfwGetKey(window, GLFW_KEY_3) == GLFW_PRESS) {
+				if (currentCameraState != DOLLY_ZOOM) {
+					currentCameraState = DOLLY_ZOOM;
+					cameraAnimationTime = 0.0f;
+					cameraStartPosition = cameraPosition;
+					cameraStartTarget = currentTarget;
+				}
+			}
+
+			switch (currentCameraState) {
+			case ORBIT:
+				cameraPosition = GetOrbitCamera(currentTime);
+				currentTarget = ORBIT_TARGET;
+				break;
+
+			case GENERAL:
+				cameraAnimationTime += 0.016f;
+				cameraPosition = GetGeneralPlaneCamera(cameraAnimationTime, cameraStartPosition, cameraStartTarget, currentTarget);
+				if (cameraAnimationTime >= ANIMATION_DURATION) {
+					currentCameraState = ORBIT;
+				}
+				break;
+
+			case DETAIL:
+				cameraAnimationTime += 0.016f;
+				cameraPosition = GetDetailPlaneCamera(cameraAnimationTime, cameraStartPosition, cameraStartTarget, currentTarget);
+				if (cameraAnimationTime >= ANIMATION_DURATION) {
+					currentCameraState = ORBIT;
+				}
+				break;
+
+			case DOLLY_ZOOM:
+				cameraAnimationTime += 0.016f;
+				cameraPosition = GetDollyZoomCamera(cameraAnimationTime, cameraStartPosition, cameraStartTarget, currentFOV, currentTarget);
+				if (cameraAnimationTime >= ANIMATION_DURATION) {
+					currentCameraState = ORBIT;
+				}
+				break;
+			}
 
 			//Generamos la matriz de vista de la camara
-			glm::mat4 view = glm::lookAt(cameraPosition, CAMERA_TARGET, CAMERA_UP);
+			glm::mat4 view = glm::lookAt(cameraPosition, currentTarget, CAMERA_UP);
 
 			//Pasamos la matriz de vista actualizada al shader
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "view"),1,GL_FALSE,glm::value_ptr(view));
@@ -637,7 +751,7 @@ void main() {
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll3RotationMatrix));
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll3ScaleMatrix));
 
-			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 0.5f, 1.0f));
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 0.f, 1.0f));
 
 			models[1].Render();
 
