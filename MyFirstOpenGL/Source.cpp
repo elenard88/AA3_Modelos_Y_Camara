@@ -427,6 +427,7 @@ void main() {
 
 		//Cargo Modelo
 		models.push_back(LoadOBJModel("Assets/Models/rock.obj"));
+		models.push_back(LoadOBJModel("Assets/Models/troll.obj"));
 
 		//Compilar programa
 		compiledPrograms.push_back(CreateProgram(myFirstProgram));
@@ -561,6 +562,45 @@ void main() {
 			SendTintColor(compiledPrograms[0], glm::vec4(0.8f, 0.9f, 1.0f, 1.0f));
 
 			models[0].Render();
+
+			// Troll 1
+				glm::mat4 troll1TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0.f, -1.f, -3.f));
+			glm::mat4 troll1RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 troll1ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.8f, 0.8f, 0.8f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(troll1TranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll1RotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll1ScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+			models[1].Render();
+
+			//Troll 2
+			glm::mat4 troll2TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(-2.f, -1.f, -2.f));
+			glm::mat4 troll2RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 troll2ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.8f, 0.8f, 0.8f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(troll2TranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll2RotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll2ScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+			models[1].Render();
+
+			//Troll 3
+			glm::mat4 troll3TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(2.f, -1.f, -2.f));
+			glm::mat4 troll3RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-45.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 troll3ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.8f, 0.8f, 0.8f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(troll3TranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll3RotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll3ScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+			models[1].Render();
 
 			//Cambiamos buffers
 			glFlush();
