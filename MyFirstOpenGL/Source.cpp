@@ -416,6 +416,16 @@ void main() {
 		return;
 	}
 
+	//Leer textura de troll
+	int trollWidth, trollHeight, trollChannels;
+	unsigned char* trollTextureInfo = stbi_load("Assets/Textures/troll.png", &trollWidth, &trollHeight, &trollChannels, 0);
+
+	if (trollTextureInfo == nullptr) {
+		std::cout << "No se ha podido cargar la textura troll.png" << std::endl;
+		glfwTerminate();
+		return;
+	}
+
 	//Inicializamos GLEW y controlamos errores
 	if (glewInit() == GLEW_OK) {
 
@@ -436,8 +446,9 @@ void main() {
 		glActiveTexture(GL_TEXTURE0);
 
 		//Generamos textura
-		GLuint textureID;
+		GLuint textureID, trollTextureID;
 		glGenTextures(1, &textureID);
+		glGenTextures(1, &trollTextureID);
 
 		//Vinculamos textura
 		glBindTexture(GL_TEXTURE_2D, textureID);
@@ -466,6 +477,30 @@ void main() {
 
 		//Liberamos memoria de CPU
 		stbi_image_free(textureInfo);
+		
+		//Configurar textura de troll
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, trollTextureID);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//Definimos formato segun canales
+		GLenum trollTextureFormat = GL_RGB;
+
+		if (trollChannels == 4) {
+			trollTextureFormat = GL_RGBA;
+		}
+		else if (trollChannels == 3) {
+			trollTextureFormat = GL_RGB;
+		}
+
+		glTexImage2D(GL_TEXTURE_2D, 0, trollTextureFormat, trollWidth, trollHeight, 0, trollTextureFormat, GL_UNSIGNED_BYTE, trollTextureInfo);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//Liberamos memoria
+		stbi_image_free(trollTextureInfo);
 
 		//Definimos color para limpiar el buffer de color
 		glClearColor(0.f, 0.f, 0.f, 1.f);
@@ -563,8 +598,12 @@ void main() {
 
 			models[0].Render();
 
+			//Activamos la textura de troll
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, trollTextureID);
+
 			// Troll 1
-				glm::mat4 troll1TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0.f, -1.f, -3.f));
+			glm::mat4 troll1TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0.f, -1.f, -3.f));
 			glm::mat4 troll1RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
 			glm::mat4 troll1ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.8f, 0.8f, 0.8f));
 
@@ -572,7 +611,7 @@ void main() {
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll1RotationMatrix));
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll1ScaleMatrix));
 
-			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			SendTintColor(compiledPrograms[0], glm::vec4(0.5f, 1.0f, 1.0f, 1.0f));
 
 			models[1].Render();
 
@@ -585,7 +624,7 @@ void main() {
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll2RotationMatrix));
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll2ScaleMatrix));
 
-			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 0.5f, 1.0f, 1.0f));
 
 			models[1].Render();
 
@@ -598,7 +637,7 @@ void main() {
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(troll3RotationMatrix));
 			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(troll3ScaleMatrix));
 
-			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 0.5f, 1.0f));
 
 			models[1].Render();
 
