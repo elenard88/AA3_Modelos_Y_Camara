@@ -386,12 +386,13 @@ void main() {
 	glewExperimental = GL_TRUE;
 
 	//Activamos cull face
-	glEnable(GL_DEPTH_TEST);
-
-	glDisable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 
 	//Indicamos lado del culling
 	glCullFace(GL_BACK);
+
+	//Indicamos lado del culling
+	glEnable(GL_DEPTH_TEST);
 
 	//Leer textura
 	int width, height, nrChannels;
@@ -492,19 +493,42 @@ void main() {
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, textureID);
 
-			//roca
-			glm::mat4 rockTranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.5f, 0.0f));
-			glm::mat4 rockRotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
-			glm::mat4 rockScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.6f, 0.6f, 0.6f));
+			//roca 1
+			glm::mat4 rock1TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(-2.f, -1.5f, 0.0f));
+			glm::mat4 rock1RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(75.0f), glm::vec3(0.0f, 1.0f, -0.5f));
+			glm::mat4 rock1ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.45f, 0.45f, 0.45f));
 
-			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(rockTranslationMatrix));
-			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rockRotationMatrix));
-			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(rockScaleMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(rock1TranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rock1RotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(rock1ScaleMatrix));
 
 			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-
 			models[0].Render();
 
+
+			//roca 2
+			glm::mat4 rock2TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.5f, 0.0f));
+			glm::mat4 rock2RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(-10.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 rock2ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.55f, 0.55f, 0.55f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(rock2TranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rock2RotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(rock2ScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			models[0].Render();
+
+			//roca 3
+			glm::mat4 rock3TranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(2.f, -1.5f, 0.0f));
+			glm::mat4 rock3RotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(35.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 rock3ScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.75f, 0.75f, 0.75f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(rock3TranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rock3RotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(rock3ScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+			models[0].Render();
 
 			//Nube roca
 			glm::mat4 cloudTranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(-1.5f, 1.4f, -1.0f));
