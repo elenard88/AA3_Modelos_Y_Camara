@@ -354,6 +354,11 @@ GLuint CreateProgram(const ShaderProgram& shaders) {
 	}
 }
 
+void SendTintColor(GLuint program, const glm::vec4& tintColor) {
+
+	glUniform4f(glGetUniformLocation(program, "tintColor"), tintColor.r, tintColor.g, tintColor.b, tintColor.a);
+}
+
 void main() {
 
 	//Definir semillas del rand según el tiempo
@@ -381,14 +386,23 @@ void main() {
 	glewExperimental = GL_TRUE;
 
 	//Activamos cull face
-	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+
+	glDisable(GL_CULL_FACE);
 
 	//Indicamos lado del culling
 	glCullFace(GL_BACK);
 
 	//Leer textura
 	int width, height, nrChannels;
-	unsigned char* textureInfo = stbi_load("Assets/Textures/Cube_Texture.png", &width, &height, &nrChannels, 0);
+	unsigned char* textureInfo = stbi_load("Assets/Textures/rock.png", &width, &height, &nrChannels, 0);
+
+	//comprobamos si carga la textura
+	if (textureInfo == nullptr) {
+		std::cout << "No se ha podido cargar la textura rock.png" << std::endl;
+		glfwTerminate();
+		return;
+	}
 
 	//Inicializamos GLEW y controlamos errores
 	if (glewInit() == GLEW_OK) {
@@ -400,22 +414,70 @@ void main() {
 		myFirstProgram.fragmentShader = LoadFragmentShader("MyFirstFragmentShader.glsl");
 
 		//Cargo Modelo
-		models.push_back(LoadOBJModel("Assets/Models/Alex_Cube.obj"));
+		models.push_back(LoadOBJModel("Assets/Models/rock.obj"));
 
 		//Compilar programa
 		compiledPrograms.push_back(CreateProgram(myFirstProgram));
+
+		//Definimos canal de textura activo
+		glActiveTexture(GL_TEXTURE0);
+
+		//Generamos textura
+		GLuint textureID;
+		glGenTextures(1, &textureID);
+
+		//Vinculamos textura
+		glBindTexture(GL_TEXTURE_2D, textureID);
+
+		//Configuramos textura
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		//Definimos formato segun canales
+		GLenum textureFormat = GL_RGB;
+
+		if (nrChannels == 4) {
+			textureFormat = GL_RGBA;
+		}
+		else if (nrChannels == 3) {
+			textureFormat = GL_RGB;
+		}
+
+		//Pasamos la imagen cargada a OpenGL
+		glTexImage2D(GL_TEXTURE_2D, 0, textureFormat, width, height, 0, textureFormat, GL_UNSIGNED_BYTE, textureInfo);
+
+		//Generamos mipmap
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		//Liberamos memoria de CPU
+		stbi_image_free(textureInfo);
 
 		//Definimos color para limpiar el buffer de color
 		glClearColor(0.f, 0.f, 0.f, 1.f);
 
 		//Definimos modo de dibujo para cada cara
-		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		//Indicar a la tarjeta GPU que programa debe usar
 		glUseProgram(compiledPrograms[0]);
 
+		//Definir la matriz de vista
+		glm::mat4 view = glm::lookAt(glm::vec3(0.0f, 1.5f, 5.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+		//Definir la matriz proyeccion
+		glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)WINDOW_WIDTH / (float)WINDOW_HEIGHT, 0.1f, 100.0f);
+
 		//Asignar valores iniciales al programa
 		glUniform2f(glGetUniformLocation(compiledPrograms[0], "windowSize"), WINDOW_WIDTH, WINDOW_HEIGHT);
+
+		//Asignar valor variable de textura a usar
+		glUniform1i(glGetUniformLocation(compiledPrograms[0], "textureSampler"), 0);
+
+		//Pasar matrices de camara
+		glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "view"), 1, GL_FALSE, glm::value_ptr(view));
+		glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "projection"), 1, GL_FALSE, glm::value_ptr(projection));
 
 		//Generamos el game loop
 		while (!glfwWindowShouldClose(window)) {
@@ -426,7 +488,35 @@ void main() {
 			//Limpiamos los buffers
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-			//Renderizo objeto 0
+			//Activamos la textura de roca
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_2D, textureID);
+
+			//roca
+			glm::mat4 rockTranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.5f, 0.0f));
+			glm::mat4 rockRotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 rockScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(0.6f, 0.6f, 0.6f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(rockTranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(rockRotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(rockScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+
+			models[0].Render();
+
+
+			//Nube roca
+			glm::mat4 cloudTranslationMatrix = glm::translate(glm::mat4(1.f), glm::vec3(-1.5f, 1.4f, -1.0f));
+			glm::mat4 cloudRotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(0.f, 1.f, 0.f));
+			glm::mat4 cloudScaleMatrix = glm::scale(glm::mat4(1.f), glm::vec3(1.6f, 0.25f, 0.6f));
+
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "translationMatrix"), 1, GL_FALSE, glm::value_ptr(cloudTranslationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "rotationMatrix"), 1, GL_FALSE, glm::value_ptr(cloudRotationMatrix));
+			glUniformMatrix4fv(glGetUniformLocation(compiledPrograms[0], "scaleMatrix"), 1, GL_FALSE, glm::value_ptr(cloudScaleMatrix));
+
+			SendTintColor(compiledPrograms[0], glm::vec4(0.8f, 0.9f, 1.0f, 1.0f));
+
 			models[0].Render();
 
 			//Cambiamos buffers
